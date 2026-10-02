@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: invoice-agent
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:invoice
+    envVars:
+      - key: PORT
+        value: 10000
+
+  - type: web
+    name: contract-agent
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:contract
+    envVars:
+      - key: PORT
+        value: 10000
+
+  - type: web
+    name: brand-agent
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:brand
+    envVars:
+      - key: PORT
+        value: 10000
+
+  - type: web
+    name: research-agent
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:research
+    envVars:
+      - key: PORT
+        value: 10000
