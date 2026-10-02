@@ -4,9 +4,22 @@
 
 ---
 
-## Key Guarantee
+## 🎯 Implementation vs. Live Deployment Summary
 
-> **The router does not maintain an application-level registry of agents.** Agent metadata, descriptions, capabilities, and endpoints are discovered from ENS at runtime. Adding a 4th or 5th specialist agent requires **only publishing/updating ENS records**. The router code does not change or redeploy.
+### Implemented & Code-Verified (13/13 Vitest Suite Passing)
+- **ENS Discovery Engine**: Resolves root discovery ENS text records using Viem on Sepolia.
+- **Zero-Hardcoded Registry**: Router contains no static lists of agent names or hardcoded endpoints.
+- **Model-Driven Routing**: LLM/heuristic intent classification with strict membership validation against `discoveredAgents`.
+- **Security Protections**: HTTPS endpoint validation (localhost HTTP allowed only in development), explicit 10s request timeout (`AbortController`), untrusted response validation with Zod.
+- **Resilient Discovery**: Skips malformed records without aborting remaining agent discovery.
+- **No-Agent Handling**: Unmatched requests return an explicit `no_suitable_agent` payload.
+- **Specialist Agents**: 4 complete implementations (`invoice-agent`, `contract-agent`, `brand-agent`, `research-agent`).
+- **Fourth-Agent Architecture**: 4th agent (`research-agent`) is discovered solely via ENS text records without router code modifications.
+
+### Live Infrastructure Status
+- **Live Sepolia ENS Records**: `NOT VERIFIED` *(Requires publishing with a funded `SEPOLIA_PRIVATE_KEY` owning target ENS domain using `scripts/publish-sepolia-ens.ts`)*.
+- **Live Public HTTPS Endpoints**: `NOT VERIFIED` *(Documentation placeholders like `https://api.example.com/...` are used; local HTTP microservices operational in dev/tests)*.
+- **Fourth-Agent ENS Discovery Architecture**: `VERIFIED` *(Tested & confirmed via automated unit/integration test suites)*.
 
 ---
 
@@ -60,7 +73,7 @@ Full documentation: [`docs/ens-record-format.md`](file:///c:/Users/nikita/OneDri
 
 ---
 
-## 🌐 Published Sepolia ENS Names & Endpoints Audit
+## 🌐 Sepolia ENS Names & Deployment Status
 
 - **Root Discovery Name**: `devcon-router.eth`
 - **Invoice Specialist**: `invoice.devcon-router.eth` (`agent.name` = `invoice-agent`)
@@ -68,10 +81,10 @@ Full documentation: [`docs/ens-record-format.md`](file:///c:/Users/nikita/OneDri
 - **Brand Specialist**: `brand.devcon-router.eth` (`agent.name` = `brand-agent`)
 - **Research Specialist (Dynamic 4th)**: `research.devcon-router.eth` (`agent.name` = `research-agent`)
 
-> **Deployment Audit Note**:
-> - Live Sepolia ENS publication is performed using `scripts/publish-sepolia-ens.ts` when provided with a funded `SEPOLIA_PRIVATE_KEY` owning `devcon-router.eth`.
-> - Documented URLs such as `https://api.example.com/...` are documentation placeholders for production HTTPS deployments.
-> - When running locally or during test suite execution, agent endpoints resolve to live HTTP servers (`http://localhost:3000/api/agents/invoice`, etc.).
+> **Deployment Reality**:
+> - Documented URLs such as `https://api.example.com/...` are documentation placeholders.
+> - Local development and automated test executions run against local microservices (`http://localhost:3000/api/agents/invoice`, etc.).
+> - Deploying to live Sepolia ENS requires executing `npm run publish-ens` with a funded `SEPOLIA_PRIVATE_KEY` owning the target ENS domain on Sepolia.
 
 ---
 
@@ -204,18 +217,6 @@ Run the full automated vitest suite (13 tests covering all 9 requirement checks 
 ```bash
 npm test
 ```
-
-Test coverage includes:
-- **Test 1**: Constrained model selection (untrusted/invented agent strings rejected).
-- **Test 2**: Endpoint comes strictly from ENS text record.
-- **Test 3**: Static check ensuring zero hardcoded agent registries in router source code.
-- **Test 4**: Gracefully skipping malformed ENS records.
-- **Test 5**: Explicit downstream request timeout enforcement.
-- **Test 6**: HTTPS enforcement (rejects `http://example.com`, allows `https://...` and `http://localhost`).
-- **Test 7**: Explicit `no_suitable_agent` response for unmatched queries.
-- **Test 8**: End-to-end routing cases matrix.
-- **Test 9**: Security credential scan guaranteeing no secrets are committed.
-- **Item 20 Acceptance Suite**: End-to-end verification of overdue invoice routing, weather query rejection, and invented agent rejection.
 
 ---
 
