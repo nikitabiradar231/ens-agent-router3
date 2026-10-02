@@ -53,20 +53,25 @@ Each agent domain (e.g. `invoice.devcon-router.eth`) publishes standard text rec
 | :--- | :--- | :--- | :--- | :--- |
 | `agent.name` | **Yes** | String | Slug format `^[a-z0-9-]+$` | `invoice-agent` |
 | `agent.description` | **Yes** | String | Min 5 chars capability summary | `Handles overdue invoices, status & billing.` |
-| `agent.endpoint` | **Yes** | URL | Must use HTTPS (or localhost in dev) | `https://api.example.com/invoice` |
+| `agent.endpoint` | **Yes** | URL | Must use HTTPS (or localhost in dev) | `https://api.example.com/invoice` *(Placeholder)* |
 | `agent.input` | No | String | Content-Type specifier | `application/json` |
 
 Full documentation: [`docs/ens-record-format.md`](file:///c:/Users/nikita/OneDrive/Desktop/dev3/docs/ens-record-format.md)
 
 ---
 
-## 🌐 Published Sepolia ENS Names
+## 🌐 Published Sepolia ENS Names & Endpoints Audit
 
 - **Root Discovery Name**: `devcon-router.eth`
 - **Invoice Specialist**: `invoice.devcon-router.eth` (`agent.name` = `invoice-agent`)
 - **Contract Specialist**: `contract.devcon-router.eth` (`agent.name` = `contract-agent`)
 - **Brand Specialist**: `brand.devcon-router.eth` (`agent.name` = `brand-agent`)
 - **Research Specialist (Dynamic 4th)**: `research.devcon-router.eth` (`agent.name` = `research-agent`)
+
+> **Deployment Audit Note**:
+> - Live Sepolia ENS publication is performed using `scripts/publish-sepolia-ens.ts` when provided with a funded `SEPOLIA_PRIVATE_KEY` owning `devcon-router.eth`.
+> - Documented URLs such as `https://api.example.com/...` are documentation placeholders for production HTTPS deployments.
+> - When running locally or during test suite execution, agent endpoints resolve to live HTTP servers (`http://localhost:3000/api/agents/invoice`, etc.).
 
 ---
 
@@ -117,7 +122,7 @@ External non-HTTPS URLs (e.g. `http://example.com`) are rejected immediately.
 
 ## 🚫 No Suitable Agent Handling
 
-If the model determines that no discovered agent matches the query (e.g. `"What is the capital of France?"`), the router returns an explicit response:
+If the model determines that no discovered agent matches the query (e.g. `"Tell me the current weather on Mars."`), the router returns an explicit response:
 ```json
 {
   "status": "no_suitable_agent",
@@ -131,9 +136,11 @@ If the model determines that no discovered agent matches the query (e.g. `"What 
 
 ## 🤖 Specialist Agents Included
 
-1. **Contract / Legal Questions Agent**: Answers contract clauses, agreement terms, and legal terminology.
-2. **Brand Copy Agent**: Crafts taglines, slogans, product descriptions, and brand messaging.
-3. **Invoice Agent**: Resolves overdue billing inquiries, invoice statuses, and payment reminder guidance.
+Each specialist agent is exposed as a modular Express router and can be deployed independently as a microservice or embedded into `app.ts`:
+
+1. **Invoice Agent**: Resolves overdue billing inquiries, invoice statuses, and payment reminder guidance.
+2. **Contract Agent**: Answers contract clauses, agreement terms, legal obligations, and terminology.
+3. **Brand Copy Agent**: Crafts taglines, slogans, product descriptions, and brand messaging.
 4. **Research Agent**: Demonstrates dynamic addition of a 4th specialist.
 
 ---
@@ -186,14 +193,14 @@ Test the endpoint with `curl`:
 ```bash
 curl -X POST http://localhost:3000/route \
   -H "Content-Type: application/json" \
-  -d '{"query": "My invoice is 30 days overdue."}'
+  -d '{"query": "My invoice is 45 days overdue. What should I do?"}'
 ```
 
 ---
 
 ## 🧪 Running Automated Tests
 
-Run the full automated vitest suite (10 tests covering all 9 requirement checks):
+Run the full automated vitest suite (13 tests covering all 9 requirement checks + item 20 acceptance scenarios):
 ```bash
 npm test
 ```
@@ -208,6 +215,7 @@ Test coverage includes:
 - **Test 7**: Explicit `no_suitable_agent` response for unmatched queries.
 - **Test 8**: End-to-end routing cases matrix.
 - **Test 9**: Security credential scan guaranteeing no secrets are committed.
+- **Item 20 Acceptance Suite**: End-to-end verification of overdue invoice routing, weather query rejection, and invented agent rejection.
 
 ---
 
@@ -216,9 +224,9 @@ Test coverage includes:
 Full test cases matrix documented in: [`docs/routing-cases.md`](file:///c:/Users/nikita/OneDrive/Desktop/dev3/docs/routing-cases.md)
 
 1. `"My invoice is 30 days overdue."` -> `invoice-agent` (`invoice.devcon-router.eth`)
-2. `"Explain the termination clause in this contract."` -> `contract-agent` (`contract.devcon-router.eth`)
-3. `"Write a short tagline for my coffee brand."` -> `brand-agent` (`brand.devcon-router.eth`)
-4. `"What is the capital of France?"` -> `no_suitable_agent` (`null`)
+2. `"Explain the termination clause in this agreement."` -> `contract-agent` (`contract.devcon-router.eth`)
+3. `"Write a tagline for my coffee company."` -> `brand-agent` (`brand.devcon-router.eth`)
+4. `"Tell me the current weather on Mars."` -> `no_suitable_agent` (`null`)
 5. `"Can you summarize the academic literature on zero-knowledge proofs?"` -> `research-agent` (`research.devcon-router.eth`)
 
 ---

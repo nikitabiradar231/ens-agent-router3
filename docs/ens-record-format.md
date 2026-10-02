@@ -25,12 +25,14 @@ The router uses a two-tiered resolution process via ENS text records:
 | :--- | :--- | :--- | :--- | :--- |
 | `agent.name` | **Yes** | String | Slug format: `^[a-z0-9-]+$` | `invoice-agent` |
 | `agent.description` | **Yes** | String | Min 5 chars. Concise capability overview. | `Handles overdue invoices, billing, and payment reminders.` |
-| `agent.endpoint` | **Yes** | URL | Valid URL string. Must be `https://` (or `http://localhost` in dev). | `https://api.example.com/agents/invoice` |
+| `agent.endpoint` | **Yes** | URL | Valid URL string. Must be `https://` (or `http://localhost` in dev). | `https://api.example.com/agents/invoice` *(Production example placeholder)* |
 | `agent.input` | No | String | Content type or schema identifier. Default: `application/json`. | `application/json` |
 
 ---
 
-## Conceptual Example
+## Conceptual & Local Development Examples
+
+> **Note on Endpoints**: In production live deployment, `agent.endpoint` text records point to public HTTPS URLs (e.g., `https://api.example.com/...`). In local development and automated testing, endpoints point to local servers (e.g., `http://localhost:3000/api/agents/invoice`).
 
 ### Root Record (`devcon-router.eth`)
 ```text
@@ -87,7 +89,7 @@ export const AgentRecordSchema = z.object({
 
 ---
 
-## Adding a 4th Specialist Agent
+## Adding a 4th Specialist Agent (ENS-Only Configuration)
 
 To add a new specialist (e.g. `research-agent`):
 
