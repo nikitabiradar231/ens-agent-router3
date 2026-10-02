@@ -1,8 +1,15 @@
-import { createWalletClient, createPublicClient, http, namehash, parseAbi, Address } from 'viem';
+import { createWalletClient, createPublicClient, http, namehash, labelhash, parseAbi, Address } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { sepolia } from 'viem/chains';
 import dotenv from 'dotenv';
 dotenv.config();
+
+// Standard ENS Registry contract address on Sepolia
+const ENS_REGISTRY_SEPOLIA: Address = '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e';
+
+const REGISTRY_ABI = parseAbi([
+  'function setSubnodeRecord(bytes32 node, bytes32 label, address owner, address resolver, uint64 ttl) external',
+]);
 
 /**
  * ENS Resolver ABI (setText method)
@@ -67,6 +74,7 @@ async function main() {
 
   const agentSubdomains = [
     {
+      label: 'invoice',
       subdomain: `invoice.${discoveryName}`,
       records: {
         'agent.name': 'invoice-agent',
@@ -76,6 +84,7 @@ async function main() {
       },
     },
     {
+      label: 'contract',
       subdomain: `contract.${discoveryName}`,
       records: {
         'agent.name': 'contract-agent',
@@ -85,6 +94,7 @@ async function main() {
       },
     },
     {
+      label: 'brand',
       subdomain: `brand.${discoveryName}`,
       records: {
         'agent.name': 'brand-agent',
@@ -94,6 +104,7 @@ async function main() {
       },
     },
     {
+      label: 'research',
       subdomain: `research.${discoveryName}`,
       records: {
         'agent.name': 'research-agent',
@@ -104,7 +115,7 @@ async function main() {
     },
   ];
 
-  // 1. Set root agents record
+  // 1. Set root agents discovery text record
   const rootNode = namehash(discoveryName);
   const agentListJson = JSON.stringify(agentSubdomains.map(a => a.subdomain));
 
@@ -118,24 +129,41 @@ async function main() {
   console.log(`Root Tx sent: ${rootTx}`);
   await publicClient.waitForTransactionReceipt({ hash: rootTx });
 
-  // 2. Set individual agent subdomains
+  // 2. Create subnodes on ENS Registry & write individual agent text records
   for (const agent of agentSubdomains) {
-    const node = namehash(agent.subdomain);
-    console.log(`Setting records for ${agent.subdomain}...`);
+    const subnodeLabel = labelhash(agent.label);
+    const subnode = namehash(agent.subdomain);
 
+    // Create / register subnode on ENS Registry
+    try {
+      console.log(`Creating subnode '${agent.label}' under ${discoveryName} on ENS Registry...`);
+      const subnodeTx = await walletClient.writeContract({
+        address: ENS_REGISTRY_SEPOLIA,
+        abi: REGISTRY_ABI,
+        functionName: 'setSubnodeRecord',
+        args: [rootNode, subnodeLabel, account.address, resolverAddress, 0n],
+      });
+      console.log(`  Subnode Tx sent: ${subnodeTx}`);
+      await publicClient.waitForTransactionReceipt({ hash: subnodeTx });
+    } catch (registryError) {
+      console.warn(`  [Notice] setSubnodeRecord for ${agent.subdomain} failed or already exists:`, registryError);
+    }
+
+    // Set text records on resolver
+    console.log(`Setting text records for ${agent.subdomain}...`);
     for (const [key, value] of Object.entries(agent.records)) {
       const tx = await walletClient.writeContract({
         address: resolverAddress,
         abi: RESOLVER_ABI,
         functionName: 'setText',
-        args: [node, key, value],
+        args: [subnode, key, value],
       });
       console.log(`  Set ${key} Tx: ${tx}`);
       await publicClient.waitForTransactionReceipt({ hash: tx });
     }
   }
 
-  console.log('✅ All Sepolia ENS text records successfully published!');
+  console.log('✅ All Sepolia ENS subnodes & text records successfully created and published!');
 }
 
 main().catch(console.error);
