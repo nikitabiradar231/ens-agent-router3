@@ -7,6 +7,10 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
+    "start:invoice": "tsx src/agents/invoice/index.ts",
+    "start:contract": "tsx src/agents/contract/index.ts",
+    "start:brand": "tsx src/agents/brand/index.ts",
+    "start:research": "tsx src/agents/research/index.ts",
     "dev": "tsx watch src/server.ts",
     "test": "vitest run",
     "test:watch": "vitest",
