@@ -5,22 +5,30 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 /**
+ * Official ENSv2 VerifiableFactory ABI (deployProxy method)
+ */
+const VERIFIABLE_FACTORY_ABI = parseAbi([
+  'function deployProxy(address implementation, bytes32 salt, bytes calldata data) external returns (address proxy)',
+]);
+
+/**
  * ENSv2 Subregistry ABI (register method)
  */
 const ENSV2_SUBREGISTRY_ABI = parseAbi([
+  'function register(string label, address owner, address subregistry, address resolver, uint256 roleBitmap, uint64 expiry) external returns (uint256 id)',
   'function register(string label, address owner, address resolver, bytes[] data) external returns (bytes32 node)',
 ]);
 
 /**
- * ENS Resolver ABI (setText method)
+ * ENS Resolver ABI (setText & multicall methods)
  */
 const RESOLVER_ABI = parseAbi([
   'function setText(bytes32 node, string calldata key, string calldata value) external',
+  'function multicall(bytes[] calldata data) external returns (bytes[] memory results)',
 ]);
 
-// Official Sepolia ENSv2 Subregistry for parent name nikita-router.eth
+// Official Sepolia ENSv2 Reference Addresses
 const ENSV2_SUBREGISTRY_SEPOLIA: Address = getAddress('0xf303905d30317DE0601bF048479186Afa9f799e9');
-// Official Sepolia Public Resolver
 const SEPOLIA_PUBLIC_RESOLVER: Address = getAddress('0x8F924A824153F16030111459D67AB12869296F37');
 
 async function main() {
